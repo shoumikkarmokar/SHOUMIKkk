@@ -1,2 +1,2 @@
 # SHOUMIKK
-project
+Web Animation Project
