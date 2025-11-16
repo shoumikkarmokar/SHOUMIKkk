@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="bn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Simple Bouncing Ball</title>
+  <style>
+    body{ margin:0; height:100vh; display:flex; align-items:center; justify-content:center;
+          background: linear-gradient(180deg,#0f1724,#071029); color:#fff; font-family: sans-serif; }
+    canvas{ border-radius:8px; box-shadow:0 8px 30px rgba(0,0,0,0.6); background:#071226; }
+    .wrap{ text-align:center; }
+    h2{ font-weight:600; margin:12px 0 6px; font-size:18px; color:#cfe9ff; }
+    p{ margin:0 0 12px; color:#9fb7d6; font-size:13px; }
+    button{ padding:8px 12px; border-radius:8px; border:none; cursor:pointer; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h2>Simple Bouncing Ball</h2>
+    <p>Click canvas to add another ball</p>
+    <canvas id="cv" width="560" height="320"></canvas>
+  </div>
+
+  <script>
+    const cvs = document.getElementById('cv');
+    const ctx = cvs.getContext('2d');
+
+    // Ball class
+    class Ball {
+      constructor(x,y,r,dx,dy,color){
+        this.x = x; this.y = y; this.r = r;
+        this.dx = dx; this.dy = dy;
+        this.color = color || '#7dd3fc';
+        this.gravity = 0.28;
+        this.friction = 0.82; // bounce energy loss
+      }
+      update(){
+        this.dy += this.gravity;
+        this.x += this.dx;
+        this.y += this.dy;
+
+        // left/right walls
+        if(this.x - this.r < 0){ this.x = this.r; this.dx = -this.dx; }
+        if(this.x + this.r > cvs.width){ this.x = cvs.width - this.r; this.dx = -this.dx; }
+
+        // floor/ceiling
+        if(this.y + this.r > cvs.height){
+          this.y = cvs.height - this.r;
+          this.dy = -this.dy * this.friction;
+          // small stop threshold
+          if(Math.abs(this.dy) < 0.5) this.dy = 0;
+        }
+        if(this.y - this.r < 0){
+          this.y = this.r;
+          this.dy = -this.dy * this.friction;
+        }
+      }
+      draw(){
+        ctx.beginPath();
+        ctx.fillStyle = this.color;
+        ctx.arc(this.x, this.y, this.r, 0, Math.PI*2);
+        ctx.fill();
+        ctx.closePath();
+      }
+    }
+
+    // initial balls
+    const balls = [
+      new Ball(120, 40, 18, 2.5, 0, '#ffd166'),
+      new Ball(320, 60, 14, -2, 0, '#7dd3fc')
+    ];
+
+    function randBetween(a,b){ return Math.random()*(b-a)+a; }
+
+    // click to add ball
+    cvs.addEventListener('click', (e) => {
+      const rect = cvs.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const r = Math.floor(randBetween(8,22));
+      const dx = randBetween(-3,3);
+      const dy = randBetween(-6,-2);
+      const colors = ['#7dd3fc','#c7b8ff','#7ee787','#ffd166','#ef476f'];
+      const color = colors[Math.floor(Math.random()*colors.length)];
+      balls.push(new Ball(x,y,r,dx,dy,color));
+    });
+
+    // animation loop
+    function loop(){
+      ctx.clearRect(0,0,cvs.width,cvs.height);
+      // subtle background fade
+      ctx.fillStyle = 'rgba(7,18,38,0.12)';
+      ctx.fillRect(0,0,cvs.width,cvs.height);
+
+      for(let b of balls){
+        b.update();
+        b.draw();
+      }
+      requestAnimationFrame(loop);
+    }
+    loop();
+
+    // responsive: scale canvas visually but keep internal size
+    function fit(){
+      const maxW = Math.min(window.innerWidth - 40, 700);
+      const scale = maxW / cvs.width;
+      cvs.style.width = `${cvs.width * scale}px`;
+      cvs.style.height = `${cvs.height * scale}px`;
+    }
+    window.addEventListener('resize', fit);
+    fit();
+  </script>
+</body>
+</html>
